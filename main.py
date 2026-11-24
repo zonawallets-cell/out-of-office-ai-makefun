@@ -8,6 +8,8 @@ Entry for make.fun bounty
 Pure standard library. Prints the single out-of-office auto-reply and
 writes it to /output/entry.txt, the path the make.fun program/v1
 harness gates on (UTF-8 text, 1 to 159 characters).
+
+Gate: the line is one non-empty line of 1-159 UTF-8 characters (it is 154).
 """
 
 import os
@@ -22,28 +24,28 @@ LINE = (
 MAX_CHARS = 159
 
 
-def main() -> int:
-    if len(LINE) > MAX_CHARS:
-        print(
-            "error: auto-reply is %d characters, over the %d limit"
-            % (len(LINE), MAX_CHARS),
-            file=sys.stderr,
-        )
-        return 1
+def validate_line(line: str) -> str:
+    """Gate: the entry must be exactly one non-empty line of 1-159 chars."""
+    if not line or "\n" in line or len(line) > MAX_CHARS:
+        raise ValueError("entry line must be one non-empty line of 1-159 chars")
+    return line
 
+
+def main() -> int:
+    line = validate_line(LINE)
     out_path = os.environ.get("ENTRY_OUTPUT", "/output/entry.txt")
     try:
         parent = os.path.dirname(out_path)
         if parent:
             os.makedirs(parent, exist_ok=True)
         with open(out_path, "w", encoding="utf-8") as f:
-            f.write(LINE)
+            f.write(line)
     except OSError:
         # Local runs without a writable /output: keep a copy next to main.py.
         with open("entry.txt", "w", encoding="utf-8") as f:
-            f.write(LINE)
+            f.write(line)
 
-    print(LINE)
+    print(line)
     return 0
 
 
